@@ -1,6 +1,6 @@
 {
   "name": "@msvargas97/pico.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Implement rapid face detection (Viola Jones) and pupil detection, all development by tehnokv/picojs",
   "module": "./dist/picojs.js",
   "main": "./dist/picojs.min.js",
