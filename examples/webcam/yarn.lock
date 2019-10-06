@@ -1092,10 +1092,10 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@msvargas97/pico.js@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@msvargas97/pico.js/-/pico.js-1.0.0.tgz#9ce8717556d653e4769499c8225151f7b660c9cc"
-  integrity sha512-nsCSxKPqR6bkND5yXNyruv4t8LKcAtXLrYKSH2AveIKcMcSreFd/fQMQNwupgvawNMQCuMEFRB+Fx3KpWXVF2w==
+"@msvargas97/pico.js@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@msvargas97/pico.js/-/pico.js-1.0.1.tgz#e8b2d9d86475a026438d53fd1f00c9513eadc388"
+  integrity sha512-U+E6vIvsMyKoF0LqrqSZAVyPcj1XfeAfwt61qTZ2OpitW6ZMdoI5/bqFy593tVdreCcLLF4b2OOM/7A+SBhrKw==
 
 "@nodelib/fs.stat@^1.1.2":
   version "1.1.3"
