@@ -5,9 +5,12 @@ import {
   IPicoImage,
   Height,
   Width,
-  IPicoParams
+  IPicoParams,
+  IFaceDetection,
+  IPupilDetection,
+  IDetectionResult
 } from "global";
-import { defaultParams } from "./default-options";
+import { defaultParams, defaultSizeImage } from "./default-options";
 import { pico } from "./pico";
 import { lploc } from "./lploc";
 
@@ -105,13 +108,32 @@ export class PicoImage implements IPicoImage {
   ) {}
 }
 
-export class FacePupilOptions {
+export enum ShapeValues {
+  Circle,
+  Square
+}
+
+export interface IFacePupilOptions {
+  params: IPicoParams;
+  withPupils: boolean;
+  threshold: number;
+  iouthreshold: number;
+  shape: ShapeValues;
+  ctx?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  shapeColor: string;
+  pupilColor: string;
+}
+
+export class FacePupilOptions implements IFacePupilOptions {
   constructor(
     public params: IPicoParams = defaultParams,
     public withPupils: boolean = true,
-    public draw: boolean = true,
     public threshold: number = 50.0,
-    public iouthreshold: number = 0.2
+    public iouthreshold: number = 0.2,
+    public shape: ShapeValues = ShapeValues.Circle,
+    public ctx?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    public shapeColor: string = "darkblue",
+    public pupilColor: string = "red"
   ) {}
 }
 
@@ -120,10 +142,14 @@ export const defaultOptions = new FacePupilOptions();
  * @description detect face
  */
 export function detect(
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  image: PicoImage | IPicoImage,
-  options: FacePupilOptions = defaultOptions
+  image: Pixels | PicoImage | IPicoImage,
+  options?: FacePupilOptions | IFacePupilOptions
 ) {
+  if (image instanceof Uint8Array) {
+    image = Object.assign(<IPicoImage>{ pixels: image }, defaultSizeImage);
+  }
+  options = Object.assign({} as IFacePupilOptions, defaultOptions, options);
+  const ctx = options.ctx;
   // run the cascade over the frame and cluster the obtained detections
   // dets is an array that contains (r, c, s, q) quadruplets
   // (representing row, column, scale and detection score)
@@ -134,18 +160,44 @@ export function detect(
   );
   dets = update_memory(dets);
   dets = pico.cluster_detections(dets, options.iouthreshold); // set IoU threshold to 0.2
+
+  const result: IDetectionResult = {
+    faces: new Array(dets.length)
+  };
+  if (options.withPupils) result.pupils = new Array(dets.length);
   for (let i = 0; i < dets.length; ++i)
     // check the detection score
     // if it's above the threshold, draw it
     // (the constant 50.0 is empirical: other cascades might require a different one)
     if (dets[i][3] > options.threshold) {
+      if (result.faces)
+        result.faces[i] = {
+          x: dets[i][1],
+          y: dets[i][0],
+          scale: dets[i][2],
+          score: dets[i][3]
+        };
       var r, c, s;
-      ctx.beginPath();
-      ctx.arc(dets[i][1], dets[i][0], dets[i][2] / 2, 0, 2 * Math.PI, false);
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "red";
-      ctx.stroke();
+      if (ctx) {
+        ctx.beginPath();
+        if (options.shape == ShapeValues.Square) {
+          ctx.rect(dets[i][1], dets[i][0], dets[i][2], dets[i][2]);
+        } else {
+          ctx.arc(
+            dets[i][1],
+            dets[i][0],
+            dets[i][2] / 2,
+            0,
+            2 * Math.PI,
+            false
+          );
+        }
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = options.shapeColor;
+        ctx.stroke();
+      }
       if (options.withPupils) {
+        const pupils: IPupilDetection[] = new Array(2);
         //
         // find the eye pupils for each detected face
         // starting regions for localization are initialized based on the face bounding box
@@ -156,11 +208,14 @@ export function detect(
         s = 0.35 * dets[i][2];
         [r, c] = do_puploc(r, c, s, 63, image);
         if (r >= 0 && c >= 0) {
-          ctx.beginPath();
-          ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = "red";
-          ctx.stroke();
+          if (ctx) {
+            ctx.beginPath();
+            ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = options.pupilColor;
+            ctx.stroke();
+          }
+          pupils[0] = { x: c, y: r };
         }
         // second eye
         r = dets[i][0] - 0.075 * dets[i][2];
@@ -168,15 +223,19 @@ export function detect(
         s = 0.35 * dets[i][2];
         [r, c] = do_puploc(r, c, s, 63, image);
         if (r >= 0 && c >= 0) {
-          ctx.beginPath();
-          ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = "red";
-          ctx.stroke();
+          if (ctx) {
+            ctx.beginPath();
+            ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = options.pupilColor;
+            ctx.stroke();
+          }
+          pupils[1] = { x: c, y: r };
         }
+        if (result.pupils) result.pupils[i] = pupils;
       }
     }
-  return dets;
+  return result;
 }
 
 export { pico };

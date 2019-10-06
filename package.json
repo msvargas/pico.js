@@ -2,12 +2,19 @@
   "name": "pico.js",
   "version": "1.0.0",
   "description": "Implement rapid face detection (Viola Jones) and pupil detection, all development by tehnokv/picojs",
-  "main": "/dist/commonjs2/picojs.min.js",
+  "module": "./build/es6/index.js",
+  "main": "./build/commonjs/index.js",
+  "typings": "./build/commonjs/index.d.ts",
   "scripts": {
+    "build:npm": "set TARGET=commonjs2&&webpack --mode=production&&webpack --mode=development&&yarn tsc-es6&&yarn cp-pico-es6",
+    "build:web": "set TARGET=global&&webpack --mode=production&&webpack --mode=development&&yarn tsc&&yarn cp-pico",
     "tsc": "tsc",
-    "build:npm": "set TARGET=commonjs2&&webpack --mode production",
-    "build:web": "set TARGET=global&&webpack --mode production",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tsc-es6": "tsc --p tsconfig.es6.json",
+    "cp-pico": "COPY src\\pico.js build\\commonjs&&COPY src\\lploc.js build\\commonjs",
+    "cp-pico-es6": "COPY src\\pico.js build\\es6&&COPY src\\lploc.js build\\es6",
+    "clean": "RMDIR /Q/S build&&RMDIR /Q/S dist",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs": "typedoc --out docs ./src --mode file --includeDeclarations --excludeExternals --module commonjs --target ES6 --tsconfig tsconfig.es6.json"
   },
   "repository": {
     "type": "git",
@@ -32,6 +39,7 @@
   "devDependencies": {
     "@types/node": "^12.7.11",
     "ts-loader": "^6.2.0",
+    "typedoc": "^0.15.0",
     "typescript": "^3.6.3",
     "webpack": "^4.41.0",
     "webpack-cli": "^3.3.9"
