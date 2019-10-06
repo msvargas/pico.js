@@ -2,6 +2,7 @@ __pycache__
 node_modules
 
 **/*.js
+!dist/**/*.js
 **/*.d.ts
 !pico.js
 !lploc.js
