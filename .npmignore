@@ -15,3 +15,5 @@ tsconfig.json
 *.code-workspace
 dist/**/*
 !dist/commonjs2/picojs.min.js
+docs
+docs/*

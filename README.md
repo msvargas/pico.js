@@ -5,11 +5,11 @@ Implements NPM package of pico.js library development by: [tehnokv/picojs](https
 ## Install
 
 ```
-npm install pico.js
+npm install @msvargas97/pico.js
 ```
 
 ```
-yarn add pico.js
+yarn add @msvargas97/pico.js
 ```
 
 ## Features

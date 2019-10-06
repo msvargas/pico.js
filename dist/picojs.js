@@ -1,5 +1,14 @@
-module.exports =
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["picojs"] = factory();
+	else
+		root["picojs"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -114,8 +123,11 @@ var Camvas = /** @class */ (function () {
      *
      * @param callback callback to update
      */
-    function Camvas(callback) {
+    function Camvas(callback, constraints) {
+        var _this = this;
+        if (constraints === void 0) { constraints = { video: true, audio: false }; }
         this.callback = callback;
+        this.constraints = constraints;
         this._raId = 0;
         navigator.getUserMedia =
             navigator.getUserMedia ||
@@ -136,6 +148,15 @@ var Camvas = /** @class */ (function () {
         this.videoEl.setAttribute("height", "1");
         streamContainer.appendChild(this.videoEl);
         document.body.appendChild(streamContainer);
+        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+            // Yay, now our webcam input is treated as a normal video and
+            // we can start having fun
+            _this.videoEl.srcObject = stream;
+            _this.update();
+        }, function (err) {
+            if (err)
+                throw err;
+        });
     }
     Object.defineProperty(Camvas.prototype, "started", {
         /**
@@ -161,9 +182,8 @@ var Camvas = /** @class */ (function () {
      *
      * @param constraints Change MediaStreamContraints
      */
-    Camvas.prototype.play = function (constraints) {
+    Camvas.prototype.play = function () {
         var _this = this;
-        if (constraints === void 0) { constraints = { video: true, audio: false }; }
         // The callback happens when we are starting to stream the video.
         return new Promise(function (resolve, reject) {
             if (!!_this.videoEl.srcObject) {
@@ -173,21 +193,6 @@ var Camvas = /** @class */ (function () {
                         .then(function () { return _this.update(); })
                         .then(resolve)
                     : resolve();
-            }
-            else {
-                navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-                    // Yay, now our webcam input is treated as a normal video and
-                    // we can start having fun
-                    _this.videoEl.srcObject = stream;
-                    /* const oncanplay = () => {
-                        this.videoEl.removeEventListener("canplay", oncanplay);
-                        this.update();
-                        resolve(stream);
-                      };
-                      this.videoEl.oncanplay = oncanplay; */
-                    _this.update();
-                    resolve(stream);
-                }, reject);
             }
         });
     };
@@ -218,17 +223,18 @@ var Camvas = /** @class */ (function () {
         if (!this.callback)
             return;
         var last = Date.now();
+        console.log(this.videoEl);
         var loop = function () {
-            if (_this.videoEl.paused || _this.videoEl.ended || !_this.callback) {
-                _this._raId && cancelAnimationFrame(_this._raId);
-                _this._raId = 0;
-                return;
-            }
+            /*  if (this.videoEl.paused || this.videoEl.ended || !this.callback) {
+              this._raId && cancelAnimationFrame(this._raId);
+              this._raId = 0;
+              return;
+            } */
             // For some effects, you might want to know how much time is passed
             // since the last frame; that's why we pass along a Delta time `dt`
             // variable (expressed in milliseconds)
             var dt = Date.now() - last;
-            _this.callback(_this.videoEl, dt);
+            _this.callback && _this.callback(_this.videoEl, dt);
             last = Date.now();
             _this._raId = requestAnimationFrame(loop);
         };
@@ -286,8 +292,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var picojs = __importStar(__webpack_require__(/*! ./picojs */ "./src/picojs.ts"));
 var camvas_1 = __webpack_require__(/*! ./camvas */ "./src/camvas.ts");
 exports.Camvas = camvas_1.default;
-var video_capture_1 = __webpack_require__(/*! ./video-capture */ "./src/video-capture.ts");
-exports.VideoCapture = video_capture_1.default;
 exports.default = picojs;
 
 
@@ -849,65 +853,7 @@ function detect(image, options) {
 exports.detect = detect;
 
 
-/***/ }),
-
-/***/ "./src/video-capture.ts":
-/*!******************************!*\
-  !*** ./src/video-capture.ts ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var camvas_1 = __importDefault(__webpack_require__(/*! ./camvas */ "./src/camvas.ts"));
-var default_options_1 = __webpack_require__(/*! ./default-options */ "./src/default-options.ts");
-var VideoCapture = /** @class */ (function (_super) {
-    __extends(VideoCapture, _super);
-    function VideoCapture(canvas, src) {
-        var _this = _super.call(this) || this;
-        _this.canvas = canvas;
-        _this.src = src;
-        _this.width = default_options_1.defaultSizeImage.ncols;
-        _this.height = default_options_1.defaultSizeImage.nrows;
-        _this.callback = function (videoEl, dt) { };
-        _this.ctx = canvas.getContext("2d");
-        if (!_this.ctx)
-            throw new Error("Fail to get canvas context");
-        if (src && typeof src !== "string") {
-            if (src.video) {
-                try {
-                    _this.width = src.video.width;
-                    _this.height = src.video.height;
-                }
-                catch (_a) { }
-            }
-            _this.play(src);
-        }
-        return _this;
-    }
-    return VideoCapture;
-}(camvas_1.default));
-exports.default = VideoCapture;
-
-
 /***/ })
 
 /******/ });
+});

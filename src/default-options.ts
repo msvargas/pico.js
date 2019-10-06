@@ -1,4 +1,4 @@
-import { IPicoSizeImage, IPicoParams } from "global";
+import { IPicoSizeImage, IPicoParams } from "../typings/global";
 
 export const defaultSizeImage: IPicoSizeImage = {
   nrows: 480,

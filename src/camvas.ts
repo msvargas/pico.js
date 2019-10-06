@@ -1,4 +1,4 @@
-import { CallbackFrame } from "global";
+import { CallbackFrame } from "../typings/global";
 
 /*
 	This code was taken from https://github.com/cbrandolino/camvas and modified to suit our needs
@@ -19,7 +19,10 @@ export default class Camvas {
    *
    * @param callback callback to update
    */
-  constructor(public callback?: CallbackFrame) {
+  constructor(
+    public callback?: CallbackFrame,
+    public constraints: MediaStreamConstraints = { video: true, audio: false }
+  ) {
     navigator.getUserMedia =
       navigator.getUserMedia ||
       (navigator as any).webkitGetUserMedia ||
@@ -43,6 +46,17 @@ export default class Camvas {
 
     streamContainer.appendChild(this.videoEl);
     document.body.appendChild(streamContainer);
+    navigator.mediaDevices.getUserMedia(constraints).then(
+      stream => {
+        // Yay, now our webcam input is treated as a normal video and
+        // we can start having fun
+        this.videoEl.srcObject = stream;
+        this.update();
+      },
+      err => {
+        if (err) throw err;
+      }
+    );
   }
   /**
    * @description check if camera canvas started
@@ -60,7 +74,7 @@ export default class Camvas {
    *
    * @param constraints Change MediaStreamContraints
    */
-  play(constraints: MediaStreamConstraints = { video: true, audio: false }) {
+  play() {
     // The callback happens when we are starting to stream the video.
     return new Promise((resolve, reject) => {
       if (!!this.videoEl.srcObject) {
@@ -70,20 +84,6 @@ export default class Camvas {
               .then(() => this.update())
               .then(resolve)
           : resolve();
-      } else {
-        navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-          // Yay, now our webcam input is treated as a normal video and
-          // we can start having fun
-          this.videoEl.srcObject = stream;
-          /* const oncanplay = () => {
-              this.videoEl.removeEventListener("canplay", oncanplay);
-              this.update();
-              resolve(stream);
-            };
-            this.videoEl.oncanplay = oncanplay; */
-          this.update();
-          resolve(stream);
-        }, reject);
       }
     });
   }
@@ -113,17 +113,18 @@ export default class Camvas {
   private update() {
     if (!this.callback) return;
     var last = Date.now();
+    console.log(this.videoEl);
     var loop = () => {
-      if (this.videoEl.paused || this.videoEl.ended || !this.callback) {
+      /*  if (this.videoEl.paused || this.videoEl.ended || !this.callback) {
         this._raId && cancelAnimationFrame(this._raId);
         this._raId = 0;
         return;
-      }
+      } */
       // For some effects, you might want to know how much time is passed
       // since the last frame; that's why we pass along a Delta time `dt`
       // variable (expressed in milliseconds)
       var dt = Date.now() - last;
-      this.callback(this.videoEl, dt);
+      this.callback && this.callback(this.videoEl, dt);
       last = Date.now();
       this._raId = requestAnimationFrame(loop);
     };

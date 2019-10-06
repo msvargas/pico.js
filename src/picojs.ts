@@ -6,10 +6,9 @@ import {
   Height,
   Width,
   IPicoParams,
-  IFaceDetection,
   IPupilDetection,
   IDetectionResult
-} from "global";
+} from "../typings/global";
 import { defaultParams, defaultSizeImage } from "./default-options";
 import { pico } from "./pico";
 import { lploc } from "./lploc";
