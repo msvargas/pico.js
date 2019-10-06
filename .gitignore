@@ -1,0 +1,7 @@
+__pycache__
+node_modules
+
+**/*.js
+**/*.d.ts
+!pico.js
+!lploc.js

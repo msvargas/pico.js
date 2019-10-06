@@ -1,0 +1,17 @@
+bin
+bin/*
+.git
+__pycache__
+.vscode
+.vscode/*
+examples/*
+examples
+yarn-error.log
+**/*.ts
+!**/*.d.ts
+test
+test/*
+tsconfig.json
+*.code-workspace
+dist/**/*
+!dist/commonjs2/picojs.min.js
