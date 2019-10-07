@@ -13,8 +13,8 @@
     "tsc-es6": "tsc --p tsconfig.es6.json",
     "clean": "RMDIR /Q/S dist&&RMDIR /Q/S build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "typedoc --out docs ./src --mode file --includeDeclarations --excludeExternals --module commonjs --target ES6 --tsconfig tsconfig.es6.json",
-    "deploy:docs" : "gh-pages "
+    "doc": "typedoc --out doc ./src --mode file --includeDeclarations --excludeExternals --module commonjs --target ES6 --tsconfig tsconfig.es6.json",
+    "deploy:doc": "gh-pages -d doc -e doc"
   },
   "repository": {
     "type": "git",
