@@ -1,21 +1,21 @@
 {
   "files": {
-    "main.css": "/pico.js/demo/static/css/main.b100e6da.chunk.css",
-    "main.js": "/pico.js/demo/static/js/main.680afe28.chunk.js",
-    "main.js.map": "/pico.js/demo/static/js/main.680afe28.chunk.js.map",
-    "runtime-main.js": "/pico.js/demo/static/js/runtime-main.4cf0c761.js",
-    "runtime-main.js.map": "/pico.js/demo/static/js/runtime-main.4cf0c761.js.map",
-    "static/js/2.770f4e9c.chunk.js": "/pico.js/demo/static/js/2.770f4e9c.chunk.js",
-    "static/js/2.770f4e9c.chunk.js.map": "/pico.js/demo/static/js/2.770f4e9c.chunk.js.map",
-    "index.html": "/pico.js/demo/index.html",
-    "precache-manifest.365c954270723e6c03d8630246444d5c.js": "/pico.js/demo/precache-manifest.365c954270723e6c03d8630246444d5c.js",
-    "service-worker.js": "/pico.js/demo/service-worker.js",
-    "static/css/main.b100e6da.chunk.css.map": "/pico.js/demo/static/css/main.b100e6da.chunk.css.map"
+    "main.css": "/pico.js/static/css/main.b100e6da.chunk.css",
+    "main.js": "/pico.js/static/js/main.6f0e8e60.chunk.js",
+    "main.js.map": "/pico.js/static/js/main.6f0e8e60.chunk.js.map",
+    "runtime-main.js": "/pico.js/static/js/runtime-main.3631c40a.js",
+    "runtime-main.js.map": "/pico.js/static/js/runtime-main.3631c40a.js.map",
+    "static/js/2.770f4e9c.chunk.js": "/pico.js/static/js/2.770f4e9c.chunk.js",
+    "static/js/2.770f4e9c.chunk.js.map": "/pico.js/static/js/2.770f4e9c.chunk.js.map",
+    "index.html": "/pico.js/index.html",
+    "precache-manifest.b84760cc860bd0315b8c240e9c0dbde8.js": "/pico.js/precache-manifest.b84760cc860bd0315b8c240e9c0dbde8.js",
+    "service-worker.js": "/pico.js/service-worker.js",
+    "static/css/main.b100e6da.chunk.css.map": "/pico.js/static/css/main.b100e6da.chunk.css.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.4cf0c761.js",
+    "static/js/runtime-main.3631c40a.js",
     "static/js/2.770f4e9c.chunk.js",
     "static/css/main.b100e6da.chunk.css",
-    "static/js/main.680afe28.chunk.js"
+    "static/js/main.6f0e8e60.chunk.js"
   ]
 }
