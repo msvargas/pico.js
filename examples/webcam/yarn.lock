@@ -1097,6 +1097,9 @@
   resolved "https://registry.yarnpkg.com/@msvargas97/pico.js/-/pico.js-1.0.1.tgz#e8b2d9d86475a026438d53fd1f00c9513eadc388"
   integrity sha512-U+E6vIvsMyKoF0LqrqSZAVyPcj1XfeAfwt61qTZ2OpitW6ZMdoI5/bqFy593tVdreCcLLF4b2OOM/7A+SBhrKw==
 
+"@msvargas97/pico.js@file:..\\..":
+  version "1.0.2"
+
 "@nodelib/fs.stat@^1.1.2":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"

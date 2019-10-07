@@ -19,8 +19,9 @@ yarn add @msvargas97/pico.js
 - Pupil detection
 - Low CPU consumption
 
-## Demo
+## Demos
 
+https://punisher97.github.io/pico.js/homepage/
 https://tehnokv.com/posts/puploc-with-trees/demo/
 
 ## License

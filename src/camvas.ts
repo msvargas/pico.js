@@ -14,7 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 // the last time it was called.
 export default class Camvas {
   public videoEl: HTMLVideoElement;
-  private _raId: number = 0;
+  private _raId?: number;
   /**
    *
    * @param callback callback to update
@@ -23,12 +23,7 @@ export default class Camvas {
     public callback?: CallbackFrame,
     public constraints: MediaStreamConstraints = { video: true, audio: false }
   ) {
-    navigator.getUserMedia =
-      navigator.getUserMedia ||
-      (navigator as any).webkitGetUserMedia ||
-      (navigator as any).mozGetUserMedia;
     this.callback = callback;
-
     // We can't `new Video()` yet, so we'll resort to the vintage
     // "hidden div" hack for dynamic loading.
     var streamContainer = document.createElement("div");
@@ -46,17 +41,6 @@ export default class Camvas {
 
     streamContainer.appendChild(this.videoEl);
     document.body.appendChild(streamContainer);
-    navigator.mediaDevices.getUserMedia(constraints).then(
-      stream => {
-        // Yay, now our webcam input is treated as a normal video and
-        // we can start having fun
-        this.videoEl.srcObject = stream;
-        this.update();
-      },
-      err => {
-        if (err) throw err;
-      }
-    );
   }
   /**
    * @description check if camera canvas started
@@ -78,12 +62,33 @@ export default class Camvas {
     // The callback happens when we are starting to stream the video.
     return new Promise((resolve, reject) => {
       if (!!this.videoEl.srcObject) {
-        this.videoEl.paused
-          ? this.videoEl
-              .play()
-              .then(() => this.update())
-              .then(resolve)
-          : resolve();
+        if (this.videoEl.paused) {
+          return this.videoEl
+            .play()
+            .then(() => this.update())
+            .then(resolve);
+        } else if (!this.videoEl.ended && !this._raId) {
+          this.update();
+          resolve();
+        } else {
+          reject(new Error("Fail to play video, it played or ended"));
+        }
+      } else {
+        navigator.getUserMedia =
+          navigator.getUserMedia ||
+          (navigator as any).webkitGetUserMedia ||
+          (navigator as any).mozGetUserMedia;
+        return navigator.mediaDevices.getUserMedia(this.constraints).then(
+          stream => {
+            // Yay, now our webcam input is treated as a normal video and
+            // we can start having fun
+            this.videoEl.srcObject = stream;
+            this.update();
+          },
+          err => {
+            if (err) reject(err);
+          }
+        );
       }
     });
   }
@@ -91,38 +96,35 @@ export default class Camvas {
    * Stop camvas
    */
   stop() {
-    if (this.videoEl && this.videoEl.srcObject) {
-      this.pause();
+    if (this.videoEl.srcObject) {
+      this._cancelAnimation();
       // stop video to unmount
       (<MediaStream>this.videoEl.srcObject)
         .getTracks()
         .forEach(track => track.stop());
       this.videoEl.srcObject = null;
     }
-  }
+   }
   /**
    * pause camvas
    */
   pause() {
     this.videoEl.pause();
+    this._cancelAnimation();
   }
 
+  private _cancelAnimation() {
+    this._raId && cancelAnimationFrame(this._raId);
+    this._raId = 0;
+  }
   /**
    * update frame
    */
-  private update() {
+  public update() {
     if (!this.callback) return;
     var last = Date.now();
-    console.log(this.videoEl);
     var loop = () => {
-      /*  if (this.videoEl.paused || this.videoEl.ended || !this.callback) {
-        this._raId && cancelAnimationFrame(this._raId);
-        this._raId = 0;
-        return;
-      } */
-      // For some effects, you might want to know how much time is passed
-      // since the last frame; that's why we pass along a Delta time `dt`
-      // variable (expressed in milliseconds)
+      if (this.videoEl.ended) return;
       var dt = Date.now() - last;
       this.callback && this.callback(this.videoEl, dt);
       last = Date.now();

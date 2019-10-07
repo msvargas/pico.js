@@ -124,15 +124,9 @@ var Camvas = /** @class */ (function () {
      * @param callback callback to update
      */
     function Camvas(callback, constraints) {
-        var _this = this;
         if (constraints === void 0) { constraints = { video: true, audio: false }; }
         this.callback = callback;
         this.constraints = constraints;
-        this._raId = 0;
-        navigator.getUserMedia =
-            navigator.getUserMedia ||
-                navigator.webkitGetUserMedia ||
-                navigator.mozGetUserMedia;
         this.callback = callback;
         // We can't `new Video()` yet, so we'll resort to the vintage
         // "hidden div" hack for dynamic loading.
@@ -148,15 +142,6 @@ var Camvas = /** @class */ (function () {
         this.videoEl.setAttribute("height", "1");
         streamContainer.appendChild(this.videoEl);
         document.body.appendChild(streamContainer);
-        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-            // Yay, now our webcam input is treated as a normal video and
-            // we can start having fun
-            _this.videoEl.srcObject = stream;
-            _this.update();
-        }, function (err) {
-            if (err)
-                throw err;
-        });
     }
     Object.defineProperty(Camvas.prototype, "started", {
         /**
@@ -187,12 +172,34 @@ var Camvas = /** @class */ (function () {
         // The callback happens when we are starting to stream the video.
         return new Promise(function (resolve, reject) {
             if (!!_this.videoEl.srcObject) {
-                _this.videoEl.paused
-                    ? _this.videoEl
+                if (_this.videoEl.paused) {
+                    return _this.videoEl
                         .play()
                         .then(function () { return _this.update(); })
-                        .then(resolve)
-                    : resolve();
+                        .then(resolve);
+                }
+                else if (!_this.videoEl.ended && !_this._raId) {
+                    _this.update();
+                    resolve();
+                }
+                else {
+                    reject(new Error("Fail to play video, it played or ended"));
+                }
+            }
+            else {
+                navigator.getUserMedia =
+                    navigator.getUserMedia ||
+                        navigator.webkitGetUserMedia ||
+                        navigator.mozGetUserMedia;
+                return navigator.mediaDevices.getUserMedia(_this.constraints).then(function (stream) {
+                    // Yay, now our webcam input is treated as a normal video and
+                    // we can start having fun
+                    _this.videoEl.srcObject = stream;
+                    _this.update();
+                }, function (err) {
+                    if (err)
+                        reject(err);
+                });
             }
         });
     };
@@ -200,8 +207,8 @@ var Camvas = /** @class */ (function () {
      * Stop camvas
      */
     Camvas.prototype.stop = function () {
-        if (this.videoEl && this.videoEl.srcObject) {
-            this.pause();
+        if (this.videoEl.srcObject) {
+            this._cancelAnimation();
             // stop video to unmount
             this.videoEl.srcObject
                 .getTracks()
@@ -214,6 +221,11 @@ var Camvas = /** @class */ (function () {
      */
     Camvas.prototype.pause = function () {
         this.videoEl.pause();
+        this._cancelAnimation();
+    };
+    Camvas.prototype._cancelAnimation = function () {
+        this._raId && cancelAnimationFrame(this._raId);
+        this._raId = 0;
     };
     /**
      * update frame
@@ -223,16 +235,9 @@ var Camvas = /** @class */ (function () {
         if (!this.callback)
             return;
         var last = Date.now();
-        console.log(this.videoEl);
         var loop = function () {
-            /*  if (this.videoEl.paused || this.videoEl.ended || !this.callback) {
-              this._raId && cancelAnimationFrame(this._raId);
-              this._raId = 0;
-              return;
-            } */
-            // For some effects, you might want to know how much time is passed
-            // since the last frame; that's why we pass along a Delta time `dt`
-            // variable (expressed in milliseconds)
+            if (_this.videoEl.ended)
+                return;
             var dt = Date.now() - last;
             _this.callback && _this.callback(_this.videoEl, dt);
             last = Date.now();
@@ -247,16 +252,94 @@ exports.default = Camvas;
 
 /***/ }),
 
-/***/ "./src/default-options.ts":
-/*!********************************!*\
-  !*** ./src/default-options.ts ***!
-  \********************************/
+/***/ "./src/index.ts":
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+var pico_1 = __webpack_require__(/*! ./pico */ "./src/pico.js");
+var lploc_1 = __webpack_require__(/*! ./lploc */ "./src/lploc.js");
+exports.lploc = lploc_1.lploc;
+var camvas_1 = __webpack_require__(/*! ./camvas */ "./src/camvas.ts");
+exports.Camvas = camvas_1.default;
+/**
+ * @description convert rgba image to gray scale
+ * @param rgba input
+ * @param nrows height
+ * @param ncols width
+ */
+function rgba_to_grayscale(rgba, nrows, ncols) {
+    var gray = new Uint8Array(nrows * ncols);
+    for (var r = 0; r < nrows; ++r)
+        for (var c = 0; c < ncols; ++c)
+            // gray = 0.2*red + 0.7*green + 0.1*blue
+            gray[r * ncols + c] =
+                (2 * rgba[r * 4 * ncols + 4 * c + 0] +
+                    7 * rgba[r * 4 * ncols + 4 * c + 1] +
+                    1 * rgba[r * 4 * ncols + 4 * c + 2]) /
+                    10;
+    return gray;
+}
+exports.rgba_to_grayscale = rgba_to_grayscale;
+exports.update_memory = pico_1.pico.instantiate_detection_memory(5);
+exports.facefinder_classify_region = function (row, column, scale, pixels, ldim) {
+    return -1.0;
+};
+exports.do_puploc = function (row, col, scale, npertubs, image) {
+    return [-1.0, -1.0, NaN, NaN];
+};
 exports.defaultSizeImage = {
     nrows: 480,
     ncols: 640,
@@ -268,30 +351,63 @@ exports.defaultParams = {
     maxsize: 1000,
     scalefactor: 1.1
 };
-
-
-/***/ }),
-
-/***/ "./src/index.ts":
-/*!**********************!*\
-  !*** ./src/index.ts ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var picojs = __importStar(__webpack_require__(/*! ./picojs */ "./src/picojs.ts"));
-var camvas_1 = __webpack_require__(/*! ./camvas */ "./src/camvas.ts");
-exports.Camvas = camvas_1.default;
+var picojs = __assign(__assign({}, pico_1.pico), { initialized: false, loaded: {
+        faceFinder: false,
+        pupilFinder: false
+    }, baseUri: "https://raw.githubusercontent.com/punisher97/pico.js/master/bin/", fetchBinary: function (uri) {
+        return fetch(uri)
+            .then(function (res) { return res.arrayBuffer(); })
+            .then(function (buffer) { return new Int8Array(buffer); });
+    }, 
+    /**
+     *
+     * @param uri URI to load binaries finders
+     */
+    load: function (baseUri) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                if (baseUri)
+                    this.baseUri = baseUri;
+                return [2 /*return*/, Promise.all([this.loadFaceFinder(), this.loadPupilFinder()]).then(function () {
+                        _this.initialized = true;
+                        return;
+                    })];
+            });
+        });
+    },
+    /**
+     * Load facefinder
+     * @param uri Uri with baseUri to fetch facefinder.bin
+     */
+    loadFaceFinder: function (uri) {
+        if (uri === void 0) { uri = "facefinder.bin"; }
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.fetchBinary(this.baseUri + uri).then(function (bytes) {
+                        exports.facefinder_classify_region = _this.unpack_cascade(bytes);
+                        picojs.loaded.faceFinder = true;
+                    })];
+            });
+        });
+    },
+    /**
+     * Load puploc.bin
+     * @param uri full uri or default uri with baseUri
+     */
+    loadPupilFinder: function (uri) {
+        if (uri === void 0) { uri = "puploc.bin"; }
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.fetchBinary(this.baseUri + uri).then(function (bytes) {
+                        exports.do_puploc = lploc_1.lploc.unpack_localizer(bytes);
+                        _this.loaded.pupilFinder = true;
+                    })];
+            });
+        });
+    } });
 exports.default = picojs;
 
 
@@ -305,126 +421,162 @@ exports.default = picojs;
 /***/ (function(module, exports) {
 
 /* This library is released under the MIT license, contact @tehnokv for more details */
-var lploc = {}
+const lploc = {};
 
-lploc.unpack_localizer = function(bytes)
-{
-	//
-	const dview = new DataView(new ArrayBuffer(4));
-	let p = 0;
-	/*
+lploc.unpack_localizer = function(bytes) {
+  //
+  const dview = new DataView(new ArrayBuffer(4));
+  let p = 0;
+  /*
 		read the number of stages, scale multiplier (applied after each stage),
 		number of trees per stage and depth of each tree
 	*/
-	dview.setUint8(0, bytes[p+0]), dview.setUint8(1, bytes[p+1]), dview.setUint8(2, bytes[p+2]), dview.setUint8(3, bytes[p+3]);
-	const nstages = dview.getInt32(0, true);
-	p = p + 4;
-	dview.setUint8(0, bytes[p+0]), dview.setUint8(1, bytes[p+1]), dview.setUint8(2, bytes[p+2]), dview.setUint8(3, bytes[p+3]);
-	const scalemul = dview.getFloat32(0, true);
-	p = p + 4;
-	dview.setUint8(0, bytes[p+0]), dview.setUint8(1, bytes[p+1]), dview.setUint8(2, bytes[p+2]), dview.setUint8(3, bytes[p+3]);
-	const ntreesperstage = dview.getInt32(0, true);
-	p = p + 4;
-	dview.setUint8(0, bytes[p+0]), dview.setUint8(1, bytes[p+1]), dview.setUint8(2, bytes[p+2]), dview.setUint8(3, bytes[p+3]);
-	const tdepth = dview.getInt32(0, true);
-	p = p + 4;
-	/*
+  dview.setUint8(0, bytes[p + 0]),
+    dview.setUint8(1, bytes[p + 1]),
+    dview.setUint8(2, bytes[p + 2]),
+    dview.setUint8(3, bytes[p + 3]);
+  const nstages = dview.getInt32(0, true);
+  p = p + 4;
+  dview.setUint8(0, bytes[p + 0]),
+    dview.setUint8(1, bytes[p + 1]),
+    dview.setUint8(2, bytes[p + 2]),
+    dview.setUint8(3, bytes[p + 3]);
+  const scalemul = dview.getFloat32(0, true);
+  p = p + 4;
+  dview.setUint8(0, bytes[p + 0]),
+    dview.setUint8(1, bytes[p + 1]),
+    dview.setUint8(2, bytes[p + 2]),
+    dview.setUint8(3, bytes[p + 3]);
+  const ntreesperstage = dview.getInt32(0, true);
+  p = p + 4;
+  dview.setUint8(0, bytes[p + 0]),
+    dview.setUint8(1, bytes[p + 1]),
+    dview.setUint8(2, bytes[p + 2]),
+    dview.setUint8(3, bytes[p + 3]);
+  const tdepth = dview.getInt32(0, true);
+  p = p + 4;
+  /*
 		unpack the trees
 	*/
-	const tcodes_ls = [];
-	const tpreds_ls = [];
-	for(let i=0; i<nstages; ++i)
-	{
-		// read the trees for this stage
-		for(let j=0; j<ntreesperstage; ++j)
-		{
-			// binary tests (we can read all of them at once)
-			Array.prototype.push.apply(tcodes_ls, bytes.slice(p, p+4*Math.pow(2, tdepth)-4));
-			p = p + 4*Math.pow(2, tdepth)-4;
-			// read the prediction in the leaf nodes of the tree
-			for(let k=0; k<Math.pow(2, tdepth); ++k)
-				for(let l=0; l<2; ++l)
-				{
-					dview.setUint8(0, bytes[p+0]), dview.setUint8(1, bytes[p+1]), dview.setUint8(2, bytes[p+2]), dview.setUint8(3, bytes[p+3]);
-					tpreds_ls.push(dview.getFloat32(0, true));
-					p = p + 4;
-				}
-		}
-	}
-	const tcodes = new Int8Array(tcodes_ls);
-	const tpreds = new Float32Array(tpreds_ls);
-	/*
+  const tcodes_ls = [];
+  const tpreds_ls = [];
+  for (let i = 0; i < nstages; ++i) {
+    // read the trees for this stage
+    for (let j = 0; j < ntreesperstage; ++j) {
+      // binary tests (we can read all of them at once)
+      Array.prototype.push.apply(
+        tcodes_ls,
+        bytes.slice(p, p + 4 * Math.pow(2, tdepth) - 4)
+      );
+      p = p + 4 * Math.pow(2, tdepth) - 4;
+      // read the prediction in the leaf nodes of the tree
+      for (let k = 0; k < Math.pow(2, tdepth); ++k)
+        for (let l = 0; l < 2; ++l) {
+          dview.setUint8(0, bytes[p + 0]),
+            dview.setUint8(1, bytes[p + 1]),
+            dview.setUint8(2, bytes[p + 2]),
+            dview.setUint8(3, bytes[p + 3]);
+          tpreds_ls.push(dview.getFloat32(0, true));
+          p = p + 4;
+        }
+    }
+  }
+  const tcodes = new Int8Array(tcodes_ls);
+  const tpreds = new Float32Array(tpreds_ls);
+  /*
 		construct the location estimaton function
 	*/
-	function loc_fun(r, c, s, pixels, nrows, ncols, ldim)
-	{
-		let root = 0;
-		const pow2tdepth = Math.pow(2, tdepth) >> 0; // '>>0' transforms this number to int
+  function loc_fun(r, c, s, pixels, nrows, ncols, ldim) {
+    let root = 0;
+    const pow2tdepth = Math.pow(2, tdepth) >> 0; // '>>0' transforms this number to int
 
-		for(let i=0; i<nstages; ++i)
-		{
-			let dr=0.0, dc=0.0;
+    for (let i = 0; i < nstages; ++i) {
+      let dr = 0.0,
+        dc = 0.0;
 
-			for(let j=0; j<ntreesperstage; ++j)
-			{
-				let idx = 0;
-				for(var k=0; k<tdepth; ++k)
-				{
-					const r1 = Math.min(nrows-1, Math.max(0, (256*r+tcodes[root + 4*idx + 0]*s)>>8));
-					const c1 = Math.min(ncols-1, Math.max(0, (256*c+tcodes[root + 4*idx + 1]*s)>>8));
-					const r2 = Math.min(nrows-1, Math.max(0, (256*r+tcodes[root + 4*idx + 2]*s)>>8));
-					const c2 = Math.min(ncols-1, Math.max(0, (256*c+tcodes[root + 4*idx + 3]*s)>>8));
+      for (let j = 0; j < ntreesperstage; ++j) {
+        let idx = 0;
+        for (var k = 0; k < tdepth; ++k) {
+          const r1 = Math.min(
+            nrows - 1,
+            Math.max(0, (256 * r + tcodes[root + 4 * idx + 0] * s) >> 8)
+          );
+          const c1 = Math.min(
+            ncols - 1,
+            Math.max(0, (256 * c + tcodes[root + 4 * idx + 1] * s) >> 8)
+          );
+          const r2 = Math.min(
+            nrows - 1,
+            Math.max(0, (256 * r + tcodes[root + 4 * idx + 2] * s) >> 8)
+          );
+          const c2 = Math.min(
+            ncols - 1,
+            Math.max(0, (256 * c + tcodes[root + 4 * idx + 3] * s) >> 8)
+          );
 
-					idx = 2*idx + 1 + (pixels[r1*ldim+c1] > pixels[r2*ldim+c2])
-				}
+          idx = 2 * idx + 1 + (pixels[r1 * ldim + c1] > pixels[r2 * ldim + c2]);
+        }
 
-				const lutidx = 2*(ntreesperstage*pow2tdepth*i + pow2tdepth*j + idx - (pow2tdepth - 1))
-				dr += tpreds[lutidx + 0];
-				dc += tpreds[lutidx + 1];
+        const lutidx =
+          2 *
+          (ntreesperstage * pow2tdepth * i +
+            pow2tdepth * j +
+            idx -
+            (pow2tdepth - 1));
+        dr += tpreds[lutidx + 0];
+        dc += tpreds[lutidx + 1];
 
-				root += 4*pow2tdepth - 4;
-			}
+        root += 4 * pow2tdepth - 4;
+      }
 
-			r = r + dr*s;
-			c = c + dc*s;
+      r = r + dr * s;
+      c = c + dc * s;
 
-			s = s*scalemul;
-		}
+      s = s * scalemul;
+    }
 
-		return [r, c];
-	}
-	/*
+    return [r, c];
+  }
+  /*
 		this function applies random perturbations to the default rectangle (r, c, s)
 	*/
-	function loc_fun_with_perturbs(r, c, s, nperturbs, image)
-	{
-		const rows=[], cols=[];
+  function loc_fun_with_perturbs(r, c, s, nperturbs, image) {
+    const rows = [],
+      cols = [];
 
-		for(let i=0; i<nperturbs; ++i)
-		{
-			const _s = s*(0.925 + 0.15*Math.random());
-			let _r = r + s*0.15*(0.5 - Math.random());
-			let _c = c + s*0.15*(0.5 - Math.random());
+    for (let i = 0; i < nperturbs; ++i) {
+      const _s = s * (0.925 + 0.15 * Math.random());
+      let _r = r + s * 0.15 * (0.5 - Math.random());
+      let _c = c + s * 0.15 * (0.5 - Math.random());
 
-			[_r, _c] = loc_fun(_r, _c, _s, image.pixels, image.nrows, image.ncols, image.ldim)
+      [_r, _c] = loc_fun(
+        _r,
+        _c,
+        _s,
+        image.pixels,
+        image.nrows,
+        image.ncols,
+        image.ldim
+      );
 
-			rows.push(_r)
-			cols.push(_c)
-		}
+      rows.push(_r);
+      cols.push(_c);
+    }
 
-		// return the median along each axis
-		rows.sort()
-		cols.sort()
+    // return the median along each axis
+    rows.sort();
+    cols.sort();
 
-		return [rows[Math.round(nperturbs/2)], cols[Math.round(nperturbs/2)]];
-	}
-	/*
+    return [rows[Math.round(nperturbs / 2)], cols[Math.round(nperturbs / 2)]];
+  }
+  /*
 		we're done
 	*/
-	return loc_fun_with_perturbs;
-}
+  return loc_fun_with_perturbs;
+};
 
-exports.lploc = lploc
+exports.lploc = lploc;
+
 
 /***/ }),
 
@@ -637,221 +789,6 @@ pico.instantiate_detection_memory = function(size)
 }
 
 exports.pico = pico
-
-/***/ }),
-
-/***/ "./src/picojs.ts":
-/*!***********************!*\
-  !*** ./src/picojs.ts ***!
-  \***********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var default_options_1 = __webpack_require__(/*! ./default-options */ "./src/default-options.ts");
-var pico_1 = __webpack_require__(/*! ./pico */ "./src/pico.js");
-exports.pico = pico_1.pico;
-var lploc_1 = __webpack_require__(/*! ./lploc */ "./src/lploc.js");
-exports.lploc = lploc_1.lploc;
-exports.loaded = {
-    faceFinder: false,
-    pupilFinder: false
-};
-/**
- *
- * @param uri URI to load binaries finders
- */
-exports.fetchBinary = function (uri) {
-    return fetch(uri)
-        .then(function (res) { return res.arrayBuffer(); })
-        .then(function (buffer) { return new Int8Array(buffer); });
-};
-exports._baseUri = "https://raw.githubusercontent.com/punisher97/pico.js/master/bin/";
-/**
- * @description convert rgba image to gray scale
- * @param rgba input
- * @param nrows height
- * @param ncols width
- */
-function rgba_to_grayscale(rgba, nrows, ncols) {
-    var gray = new Uint8Array(nrows * ncols);
-    for (var r = 0; r < nrows; ++r)
-        for (var c = 0; c < ncols; ++c)
-            // gray = 0.2*red + 0.7*green + 0.1*blue
-            gray[r * ncols + c] =
-                (2 * rgba[r * 4 * ncols + 4 * c + 0] +
-                    7 * rgba[r * 4 * ncols + 4 * c + 1] +
-                    1 * rgba[r * 4 * ncols + 4 * c + 2]) /
-                    10;
-    return gray;
-}
-exports.rgba_to_grayscale = rgba_to_grayscale;
-exports.update_memory = pico_1.pico.instantiate_detection_memory(5);
-exports.facefinder_classify_region = function (row, column, scale, pixels, ldim) {
-    return -1.0;
-};
-exports.do_puploc = function (row, col, scale, npertubs, image) {
-    return [-1.0, -1.0, NaN, NaN];
-};
-/**
- * Load facefinder
- * @param uri Uri with baseUri to fetch facefinder.bin
- */
-function loadFaceFinder(uri) {
-    if (uri === void 0) { uri = "facefinder.bin"; }
-    return exports.fetchBinary(exports._baseUri + uri).then(function (bytes) {
-        exports.facefinder_classify_region = pico_1.pico.unpack_cascade(bytes);
-        exports.loaded.faceFinder = true;
-    });
-}
-exports.loadFaceFinder = loadFaceFinder;
-/**
- * Load puploc.bin
- * @param uri full uri or default uri with baseUri
- */
-function loadPupilFinder(uri) {
-    if (uri === void 0) { uri = "puploc.bin"; }
-    return exports.fetchBinary(exports._baseUri + uri).then(function (bytes) {
-        exports.do_puploc = lploc_1.lploc.unpack_localizer(bytes);
-        exports.loaded.pupilFinder = true;
-    });
-}
-exports.loadPupilFinder = loadPupilFinder;
-function load(baseUri) {
-    if (baseUri)
-        exports._baseUri = baseUri;
-    return Promise.all([loadFaceFinder(), loadPupilFinder()]);
-}
-exports.load = load;
-var PicoImage = /** @class */ (function () {
-    function PicoImage(pixels, nrows, ncols, ldim) {
-        this.pixels = pixels;
-        this.nrows = nrows;
-        this.ncols = ncols;
-        this.ldim = ldim;
-    }
-    return PicoImage;
-}());
-exports.PicoImage = PicoImage;
-var ShapeValues;
-(function (ShapeValues) {
-    ShapeValues[ShapeValues["Circle"] = 0] = "Circle";
-    ShapeValues[ShapeValues["Square"] = 1] = "Square";
-})(ShapeValues = exports.ShapeValues || (exports.ShapeValues = {}));
-var FacePupilOptions = /** @class */ (function () {
-    function FacePupilOptions(params, withPupils, threshold, iouthreshold, shape, ctx, shapeColor, pupilColor) {
-        if (params === void 0) { params = default_options_1.defaultParams; }
-        if (withPupils === void 0) { withPupils = true; }
-        if (threshold === void 0) { threshold = 50.0; }
-        if (iouthreshold === void 0) { iouthreshold = 0.2; }
-        if (shape === void 0) { shape = ShapeValues.Circle; }
-        if (shapeColor === void 0) { shapeColor = "darkblue"; }
-        if (pupilColor === void 0) { pupilColor = "red"; }
-        this.params = params;
-        this.withPupils = withPupils;
-        this.threshold = threshold;
-        this.iouthreshold = iouthreshold;
-        this.shape = shape;
-        this.ctx = ctx;
-        this.shapeColor = shapeColor;
-        this.pupilColor = pupilColor;
-    }
-    return FacePupilOptions;
-}());
-exports.FacePupilOptions = FacePupilOptions;
-exports.defaultOptions = new FacePupilOptions();
-/**
- * @description detect face
- */
-function detect(image, options) {
-    var _a, _b;
-    if (image instanceof Uint8Array) {
-        image = Object.assign({ pixels: image }, default_options_1.defaultSizeImage);
-    }
-    options = Object.assign({}, exports.defaultOptions, options);
-    var ctx = options.ctx;
-    // run the cascade over the frame and cluster the obtained detections
-    // dets is an array that contains (r, c, s, q) quadruplets
-    // (representing row, column, scale and detection score)
-    var dets = pico_1.pico.run_cascade(image, exports.facefinder_classify_region, options.params);
-    dets = exports.update_memory(dets);
-    dets = pico_1.pico.cluster_detections(dets, options.iouthreshold); // set IoU threshold to 0.2
-    var result = {
-        faces: new Array(dets.length)
-    };
-    if (options.withPupils)
-        result.pupils = new Array(dets.length);
-    for (var i = 0; i < dets.length; ++i)
-        // check the detection score
-        // if it's above the threshold, draw it
-        // (the constant 50.0 is empirical: other cascades might require a different one)
-        if (dets[i][3] > options.threshold) {
-            if (result.faces)
-                result.faces[i] = {
-                    x: dets[i][1],
-                    y: dets[i][0],
-                    scale: dets[i][2],
-                    score: dets[i][3]
-                };
-            var r, c, s;
-            if (ctx) {
-                ctx.beginPath();
-                if (options.shape == ShapeValues.Square) {
-                    ctx.rect(dets[i][1], dets[i][0], dets[i][2], dets[i][2]);
-                }
-                else {
-                    ctx.arc(dets[i][1], dets[i][0], dets[i][2] / 2, 0, 2 * Math.PI, false);
-                }
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = options.shapeColor;
-                ctx.stroke();
-            }
-            if (options.withPupils) {
-                var pupils = new Array(2);
-                //
-                // find the eye pupils for each detected face
-                // starting regions for localization are initialized based on the face bounding box
-                // (parameters are set empirically)
-                // first eye
-                r = dets[i][0] - 0.075 * dets[i][2];
-                c = dets[i][1] - 0.175 * dets[i][2];
-                s = 0.35 * dets[i][2];
-                _a = exports.do_puploc(r, c, s, 63, image), r = _a[0], c = _a[1];
-                if (r >= 0 && c >= 0) {
-                    if (ctx) {
-                        ctx.beginPath();
-                        ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = options.pupilColor;
-                        ctx.stroke();
-                    }
-                    pupils[0] = { x: c, y: r };
-                }
-                // second eye
-                r = dets[i][0] - 0.075 * dets[i][2];
-                c = dets[i][1] + 0.175 * dets[i][2];
-                s = 0.35 * dets[i][2];
-                _b = exports.do_puploc(r, c, s, 63, image), r = _b[0], c = _b[1];
-                if (r >= 0 && c >= 0) {
-                    if (ctx) {
-                        ctx.beginPath();
-                        ctx.arc(c, r, 1, 0, 2 * Math.PI, false);
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = options.pupilColor;
-                        ctx.stroke();
-                    }
-                    pupils[1] = { x: c, y: r };
-                }
-                if (result.pupils)
-                    result.pupils[i] = pupils;
-            }
-        }
-    return result;
-}
-exports.detect = detect;
-
 
 /***/ })
 
