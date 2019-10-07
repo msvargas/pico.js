@@ -2,6 +2,7 @@
   "name": "webcam",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://punisher97.github.io/pico.js",
   "dependencies": {
     "@msvargas97/pico.js": "file:..\\..",
     "react": "^16.10.2",
@@ -9,6 +10,8 @@
     "react-scripts": "3.2.0"
   },
   "scripts": {
+    "predeploy": "yarn run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -28,5 +31,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^2.1.1"
   }
 }

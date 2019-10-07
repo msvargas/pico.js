@@ -21,8 +21,9 @@ yarn add @msvargas97/pico.js
 
 ## Demos
 
-https://punisher97.github.io/pico.js/homepage/
-https://tehnokv.com/posts/puploc-with-trees/demo/
+* [React](https://punisher97.github.io/pico.js/examples/webcam)
+
+* [Original](https://tehnokv.com/posts/puploc-with-trees/demo/)
 
 ## License
 

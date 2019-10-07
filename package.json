@@ -2,18 +2,19 @@
   "name": "@msvargas97/pico.js",
   "version": "1.0.2",
   "description": "Implement rapid face detection (Viola Jones) and pupil detection, all development by tehnokv/picojs",
-  "module":  "./build/src/index.js",
+  "module": "./build/src/index.js",
   "main": "./build/src/index.js",
   "typings": "./build/src/index.d.ts",
   "scripts": {
-    "webpack" : "webpack",
+    "webpack": "webpack",
     "build": "webpack",
     "tsc": "tsc",
     "publish:npm": "npm publish --access public",
     "tsc-es6": "tsc --p tsconfig.es6.json",
     "clean": "RMDIR /Q/S dist&&RMDIR /Q/S build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "typedoc --out docs ./src --mode file --includeDeclarations --excludeExternals --module commonjs --target ES6 --tsconfig tsconfig.es6.json"
+    "docs": "typedoc --out docs ./src --mode file --includeDeclarations --excludeExternals --module commonjs --target ES6 --tsconfig tsconfig.es6.json",
+    "deploy:docs" : "gh-pages "
   },
   "repository": {
     "type": "git",
@@ -37,6 +38,7 @@
   "homepage": "https://github.com/punisher97/pico.js#readme",
   "devDependencies": {
     "@types/node": "^12.7.11",
+    "gh-pages": "^2.1.1",
     "ts-loader": "^6.2.0",
     "typedoc": "^0.15.0",
     "typescript": "^3.6.3",
